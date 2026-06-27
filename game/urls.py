@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import players, validate_move, play_move
+from .views import players, create_game, play_move, get_game
 
 urlpatterns = [
     path('players/', players),
-    path('validate-move/', validate_move),
+    path('create-game/', create_game),
     path('play-move/', play_move),
+    path('game/<uuid:game_id>/', get_game),
 ]
