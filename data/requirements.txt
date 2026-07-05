@@ -1,0 +1,10 @@
+Baza - svi igrači koji su nastupili u HNL od sezone 2006/07 nadalje
+Podaci - HNL golovi i nastupi 2006/07 nadalje
+       - Kup golovi i nastupi 2013/14 nadalje
+       - Superkup golovi i nastupi 1992/1993 nadalje
+       - Reprezentacija (Hrvatska) nastupi sve utakmice
+       - Klubovi - odigrali za klub barem jednu utakmicu u HNL od 2006/07 nadalje
+       - Treneri - odigrali pod njim barem jednu utakmicu u HNL od 2006/07 nadalje
+       - Titule - sve sezone
+       - Državljanstva - neki imaju dva
+       
