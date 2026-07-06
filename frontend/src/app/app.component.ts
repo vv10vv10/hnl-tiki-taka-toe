@@ -107,7 +107,8 @@ export class AppComponent {
 
   onSearchChange(value: string) {
     this.filteredPlayers = this.players.filter(p =>
-      p.name.toLowerCase().includes(value.toLowerCase())
+      p.name.toLowerCase().includes(value.toLowerCase()) ||
+      p.name_in_home_country.toLowerCase().includes(value.toLowerCase())
     );
   }
 
