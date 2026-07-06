@@ -22,6 +22,7 @@ class Country(models.Model):
 
 
 class Club(models.Model):
+    tm_id = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -29,9 +30,38 @@ class Club(models.Model):
 
 
 class Player(models.Model):
+    tm_id = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
-    clubs = models.ManyToManyField(Club)
-    countries = models.ManyToManyField(Country, related_name="players")
+    name_in_home_country = models.CharField(max_length=100)
+    is_retired = models.BooleanField(default=False)
+    market_value = models.FloatField(default=0)
+    player_slug = models.CharField(max_length=150)
+
+    clubs = models.ManyToManyField("Club", related_name="players")
+    countries = models.ManyToManyField("Country", related_name="players")
+
+    hnl_nastupi = models.IntegerField(default=0)
+    kup_nastupi = models.IntegerField(default=0)
+    superkup_nastupi = models.IntegerField(default=0)
+    a_repka_nastupi = models.IntegerField(default=0)
+
+    hnl_golovi = models.IntegerField(default=0)
+    finale_kupa_nastupi = models.IntegerField(default=0)
+    finale_kupa_golovi = models.IntegerField(default=0)
+    superkup_golovi = models.IntegerField(default=0)
+
+    najbolji_strijelac = models.IntegerField(default=0)
+
+    hnl_naslovi = models.IntegerField(default=0)
+    kup_naslovi = models.IntegerField(default=0)
+    superkup_naslovi = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.name
+
+class Coach(models.Model):
+    tm_id = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
