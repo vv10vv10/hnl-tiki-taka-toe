@@ -1,119 +1,101 @@
-<h1>Tiki Taka Toe</h1>
+<div class="game-container">
 
-<button (click)="createGame()">
-  New Game
-</button>
+  <h1 class="game-title">Tiki Taka Toe</h1>
 
-<div *ngIf="gameId">
-  <p>Game ID: {{ gameId }}</p>
-</div>
+  <button class="btn-new-game" (click)="createGame()">
+    New Game
+  </button>
 
-<h2 *ngIf="gameId && !winner">
-  Turn: {{ currentTurn || 'X' }}
-</h2>
+  <div *ngIf="gameId" class="game-id">
+    <p>Game ID: {{ gameId }}</p>
+  </div>
 
-<div *ngIf="winner">
-  <h2 *ngIf="winner !== 'draw'">
-    Winner: {{ winner }} 🎉
+  <h2 *ngIf="gameId && !winner" class="turn-indicator">
+    Turn: {{ currentTurn || 'X' }}
   </h2>
 
-  <h2 *ngIf="winner === 'draw'">
-    Draw 🤝
-  </h2>
-</div>
+  <div *ngIf="winner">
+    <h2 *ngIf="winner !== 'draw'" class="winner-banner">
+      Winner: {{ winner }} 🎉
+    </h2>
 
-<div style="display: flex; margin-left: 60px;">
-  <div *ngFor="let col of colRules" style="width: 60px; text-align: center;">
-    {{ col.display }}
+    <h2 *ngIf="winner === 'draw'" class="winner-banner draw">
+      Draw 🤝
+    </h2>
   </div>
-</div>
-<div *ngIf="board.length" class="board-wrapper">
-  <div *ngFor="let row of board; let i = index" style="display: flex;">
-    <div style="width: 60px; display:flex; align-items:center; justify-content:center;">
-      {{ rowRules[i].display }}
+
+  <div *ngIf="board.length" class="board-card">
+    <div class="col-headers">
+      <div *ngFor="let col of colRules" class="col-header">
+        {{ col.display }}
+      </div>
     </div>
-    <div
-      *ngFor="let cell of row; let j = index"
-      [ngStyle]="{
-        'background-color':
-          selectedCell?.row === i && selectedCell?.col === j
-            ? '#d6ecff'
-            : 'white',
-        'cursor': (!cell.symbol || isFinished) ? 'pointer' : 'default'
-      }"
-      style="
-        width: 60px;
-        height: 60px;
-        border: 1px solid black;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        cursor: pointer;
-      "
-      (click)="onCellClick(i, j)"
-    >
-      <div>{{ cell.symbol }}</div>
-      <div style="font-size: 10px; color: gray">
-        {{ cell.player }}
+    <div class="board-wrapper">
+      <div *ngFor="let row of board; let i = index" class="board-row">
+        <div class="row-header">
+          {{ rowRules[i].display }}
+        </div>
+        <div
+          *ngFor="let cell of row; let j = index"
+          class="cell"
+          [class.cell-selected]="selectedCell?.row === i && selectedCell?.col === j"
+          [ngStyle]="{ 'cursor': (!cell.symbol || isFinished) ? 'pointer' : 'default' }"
+          (click)="onCellClick(i, j)"
+        >
+          <div *ngIf="cell.symbol" class="jersey-wrap">
+            <svg viewBox="0 0 100 110" class="jersey-svg">
+              <path
+                class="jersey-shape"
+                [ngClass]="{'jersey-x': cell.symbol === 'X', 'jersey-o': cell.symbol === 'O'}"
+                d="M35,6 C38,14 44,19 50,19 C56,19 62,14 65,6 L88,24 L76,40 L69,34 L69,100 L31,100 L31,34 L24,40 L12,24 Z"
+              />
+              <text x="50" y="66" class="jersey-letter" text-anchor="middle">{{ cell.symbol }}</text>
+            </svg>
+          </div>
+          <div class="cell-player" *ngIf="cell.symbol">
+            {{ cell.player }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
-  <svg *ngIf="winningLine" class="win-line">
-    <line
-      [attr.x1]="lineCoords.x1"
-      [attr.y1]="lineCoords.y1"
-      [attr.x2]="lineCoords.x2"
-      [attr.y2]="lineCoords.y2"
-    />
-  </svg>
-</div>
 
-<div *ngIf="showPicker" class="modal">
-
-  <div class="player-list-box">
-
-    <input
-      type="text"
-      placeholder="Search player..."
-      [(ngModel)]="searchTerm"
-      (input)="onSearchChange(searchTerm)"
-    />
-
-    <div class="players-container">
-      <div
-        *ngFor="let player of filteredPlayers"
-        (click)="selectPlayer(player)"
-        class="player-item"
-      >
-        {{ player.search_name }}
+  <div *ngIf="showPicker" class="modal">
+    <div class="player-list-box">
+      <input
+        type="text"
+        placeholder="Search player..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange(searchTerm)"
+      />
+      <div class="players-container">
+        <div
+          *ngFor="let player of filteredPlayers"
+          (click)="selectPlayer(player)"
+          class="player-item"
+        >
+          {{ player.search_name }}
+        </div>
       </div>
     </div>
-
   </div>
 
-</div>
-
-<div *ngIf="showPossiblePlayersModal" class="modal">
-
-  <div class="player-list-box">
-
-    <h3>Possible players</h3>
-
-    <div class="players-container">
-      <div *ngFor="let player of possiblePlayers" class="possible-player-item">
-        {{ player.search_name }}
+  <div *ngIf="showPossiblePlayersModal" class="modal">
+    <div class="player-list-box">
+      <h3>Possible players</h3>
+      <div class="players-container">
+        <div *ngFor="let player of possiblePlayers" class="possible-player-item">
+          {{ player.search_name }}
+        </div>
       </div>
+      <button class="btn-close" (click)="showPossiblePlayersModal = false">
+        Close
+      </button>
     </div>
-
-    <button (click)="showPossiblePlayersModal = false">
-      Close
-    </button>
-
   </div>
 
-</div>
+  <div *ngIf="showInvalidMoveFeedback" class="invalid-move">
+    Invalid move ❌
+  </div>
 
-<div *ngIf="showInvalidMoveFeedback" style="color:red;">
-  Invalid move ❌
 </div>

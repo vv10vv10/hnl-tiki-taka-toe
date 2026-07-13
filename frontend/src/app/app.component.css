@@ -1,9 +1,217 @@
+* {
+  box-sizing: border-box;
+}
+
+.game-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.game-title {
+  color: #ffffff;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  margin-bottom: 20px;
+  border-bottom: 4px solid #e30613;
+  display: inline-block;
+  padding-bottom: 8px;
+}
+
+.btn-new-game {
+  background: #e30613;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  transition: transform 0.15s, background 0.15s;
+  margin-left: 20px;
+}
+
+.btn-new-game:hover {
+  background: #ff1a2b;
+  transform: translateY(-2px);
+}
+
+.game-id {
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.turn-indicator {
+  color: white;
+  background: rgba(0,0,0,0.25);
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin: 12px 0;
+}
+
+.winner-banner {
+  color: #ffd700;
+  font-size: 28px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+  margin: 12px 0;
+}
+
+.winner-banner.draw {
+  color: white;
+}
+
+.board-card {
+  display: inline-block;
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  margin-top: 10px;
+}
+
+.col-headers {
+  display: flex;
+  margin-left: 90px;
+}
+
+.col-header {
+  width: 90px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a5c2e;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  padding: 4px;
+}
+
+.board-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.board-row {
+  display: flex;
+}
+
+.row-header {
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a5c2e;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  padding: 4px;
+}
+
+.cell {
+  width: 90px;
+  height: 90px;
+  border: 2px solid #1a5c2e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f7fdf9;
+  transition: background 0.15s;
+}
+
+.cell:hover {
+  background: #e8f5ec;
+}
+
+.cell-selected {
+  background: #d6ecff !important;
+}
+
+/* Dres */
+
+.jersey-wrap {
+  width: 50px;
+  height: 55px;
+}
+
+.jersey-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.jersey-shape {
+  stroke: rgba(0,0,0,0.15);
+  stroke-width: 1;
+}
+
+.jersey-x {
+  fill: #1a5c2e;
+}
+
+.jersey-o {
+  fill: #e30613;
+}
+
+.jersey-letter {
+  fill: white;
+  font-size: 34px;
+  font-weight: 800;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.cell-player {
+  font-size: 9px;
+  color: #444;
+  margin-top: 3px;
+  font-weight: 600;
+  text-align: center;
+  max-width: 80px;
+  line-height: 1.1;
+}
+
+.invalid-move {
+  color: #e30613;
+  background: white;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 6px;
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
 .player-list-box {
   width: 300px;
   max-height: 400px;
   background: white;
   padding: 20px;
   border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.player-list-box h3 {
+  margin-top: 0;
+  color: #1a5c2e;
 }
 
 .player-list-box input {
@@ -11,12 +219,15 @@
   box-sizing: border-box;
   margin-bottom: 10px;
   padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .players-container {
   max-height: 250px;
   overflow-y: auto;
   border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .player-item {
@@ -35,22 +246,16 @@
   border-bottom: 1px solid #ddd;
 }
 
-.board-wrapper {
-  position: relative;
-  display: inline-block;
+.btn-close {
+  margin-top: 12px;
+  background: #1a5c2e;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-.win-line {
-  position: absolute;
-  left: 60px;
-  top: 0;
-  width: 180px;
-  height: 180px;
-  pointer-events: none;
-}
-
-.win-line line {
-  stroke: red;
-  stroke-width: 6;
-  stroke-linecap: round;
+.btn-close:hover {
+  background: #237a3d;
 }
