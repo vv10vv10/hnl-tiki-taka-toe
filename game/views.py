@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Player, Game, Cell, RowRule, ColRule, Country, Club, Confederation, Coach
+from .models import Player, Game, Cell, RowRule, ColRule, Country, Club, Confederation, Coach, Match
 from .serializer import PlayerSerializer
 import random
 from functools import partial
@@ -85,8 +85,9 @@ VALID_CLUBS = [
   "HNK Vukovar 1991"
 ]
 
-def random_rule():
-    field = random.choice(RULE_TYPES)
+def random_rule(allowed_fields=None):
+    fields = allowed_fields if allowed_fields else RULE_TYPES
+    field = random.choice(fields)
     if field == "country":
         value = random.choice(VALID_COUNTRIES)
         display = value
@@ -107,7 +108,7 @@ def random_rule():
         display = f"{value}+ HNL golova"
     return field, value, display
 
-def create_rules(game):
+def create_rules(game, allowed_fields=None):
     RowRule.objects.filter(game=game).delete()
     ColRule.objects.filter(game=game).delete()
 
@@ -117,7 +118,7 @@ def create_rules(game):
 
     for i in range(3):
         while True:
-            rule = random_rule()
+            rule = random_rule(allowed_fields)
             field, value, display = rule
             if (field, value) in used:
                 continue
@@ -136,7 +137,7 @@ def create_rules(game):
 
     for i in range(3):
         while True:
-            rule = random_rule()
+            rule = random_rule(allowed_fields)
             field, value, display = rule
             if (field, value) in used:
                 continue
@@ -191,6 +192,27 @@ def board_is_valid(game):
             if len(filtered) == 0:
                 return False
     return True
+
+def generate_valid_game(allowed_fields, match=None, game_number=1):
+    game = Game.objects.create(match=match, game_number=game_number)
+    while True:
+        create_rules(game, allowed_fields)
+        if board_is_valid(game):
+            break
+        game.row_rules.all().delete()
+        game.col_rules.all().delete()
+    for r in range(3):
+        for c in range(3):
+            Cell.objects.create(game=game, row=r, col=c)
+    return game
+
+def resolve_allowed_fields(requested_categories):
+    allowed_fields = None
+    if requested_categories:
+        allowed_fields = [f for f in requested_categories if f in RULE_TYPES]
+    if not allowed_fields or len(allowed_fields) < 2:
+        allowed_fields = RULE_TYPES
+    return allowed_fields
 
 # Create your views here.
 @api_view(['GET'])
@@ -258,30 +280,99 @@ def play_move(request):
         winning_line=None
     game.save()
 
+    match_data = None
+    if game.is_finished and game.match:
+        match = game.match
+        if game.winner == "X":
+            match.x_wins += 1
+        elif game.winner == "O":
+            match.o_wins += 1
+        majority = match.best_of // 2 + 1
+        if match.x_wins >= majority:
+            match.is_finished = True
+            match.winner = "X"
+        elif match.o_wins >= majority:
+            match.is_finished = True
+            match.winner = "O"
+        match.save()
+        match_data = match_summary(match)
+
     return Response({
         "valid": valid_move,
         "board": board,
         "current_turn": game.current_turn,
         "is_finished": game.is_finished,
         "winner": game.winner,
-        "winning_line": winning_line
+        "winning_line": winning_line,
+        "match": match_data
     })
 
 @api_view(['POST'])
 def create_game(request):
-    game = Game.objects.create()
-    while True:
-        create_rules(game)
-        if board_is_valid(game):
-            break
-        game.row_rules.all().delete()
-        game.col_rules.all().delete()
-    for r in range(3):
-        for c in range(3):
-            Cell.objects.create(game=game, row=r, col=c)
-
+    allowed_fields = resolve_allowed_fields(request.data.get("categories"))
+    game = generate_valid_game(allowed_fields)
     return Response({"game_id": str(game.id)})
 
+
+def match_summary(match):
+    return {
+        "match_id": str(match.id),
+        "best_of": match.best_of,
+        "x_wins": match.x_wins,
+        "o_wins": match.o_wins,
+        "is_finished": match.is_finished,
+        "winner": match.winner,
+        "games_played": match.games.count(),
+    }
+
+@api_view(['POST'])
+def create_match(request):
+    best_of = request.data.get("best_of")
+    if best_of not in [3, 5]:
+        best_of = 3
+    allowed_fields = resolve_allowed_fields(request.data.get("categories"))
+
+    match = Match.objects.create(best_of=best_of, categories=allowed_fields)
+    game = generate_valid_game(allowed_fields, match=match, game_number=1)
+
+    return Response({
+        "match": match_summary(match),
+        "game_id": str(game.id)
+    })
+
+@api_view(['GET'])
+def get_match(request, match_id):
+    try:
+        match = Match.objects.get(id=match_id)
+    except Match.DoesNotExist:
+        return Response({"error": "Match not found"}, status=404)
+    return Response(match_summary(match))
+
+@api_view(['POST'])
+def next_game(request):
+    match_id = request.data.get("match_id")
+    try:
+        match = Match.objects.get(id=match_id)
+    except Match.DoesNotExist:
+        return Response({"error": "Match not found"}, status=404)
+
+    if match.is_finished:
+        return Response({"error": "Match is already finished"}, status=400)
+
+    # ako postoji nedovrsena igra u seriji (netko je zatrazio remi), zabiljezi je kao remi
+    current_game = match.games.filter(is_finished=False).order_by('-game_number').first()
+    if current_game:
+        current_game.is_finished = True
+        current_game.winner = "draw"
+        current_game.save()
+
+    next_number = match.games.count() + 1
+    game = generate_valid_game(match.categories, match=match, game_number=next_number)
+
+    return Response({
+        "match": match_summary(match),
+        "game_id": str(game.id)
+    })
 
 @api_view(['GET'])
 def get_game(request, game_id):
@@ -307,7 +398,10 @@ def get_game(request, game_id):
         ],
         "current_turn": game.current_turn,
         "is_finished": game.is_finished,
-        "winner": game.winner
+        "winner": game.winner,
+        "match_id": str(game.match.id) if game.match else None,
+        "game_number": game.game_number,
+        "match": match_summary(game.match) if game.match else None
     })
 
 @api_view(['GET'])

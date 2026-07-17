@@ -10,6 +10,16 @@ export interface Cell {
   player: string | null;
 }
 
+export interface MatchSummary {
+  match_id: string;
+  best_of: number;
+  x_wins: number;
+  o_wins: number;
+  is_finished: boolean;
+  winner: string | null;
+  games_played: number;
+}
+
 export interface GameResponse {
   game_id: string;
   board: Cell[][];
@@ -19,4 +29,12 @@ export interface GameResponse {
   row_rules: Rule[];
   col_rules: Rule[];
   winning_line: number[][] | null;
+  match_id?: string | null;
+  game_number?: number;
+  match?: MatchSummary | null;
+}
+
+export interface CreateMatchResponse {
+  match: MatchSummary;
+  game_id: string;
 }

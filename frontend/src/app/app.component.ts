@@ -2,8 +2,14 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { GameService } from './services/game.service';
-import { GameResponse, Cell, Rule } from './models/game.model';
+import { GameResponse, Cell, Rule, MatchSummary } from './models/game.model';
 import { FormsModule } from '@angular/forms';
+
+interface CategoryOption {
+  key: string;
+  label: string;
+  locked?: boolean;
+}
 
 @Component({
   selector: 'app-root',
@@ -13,6 +19,57 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
+  // mora se poklapati s RULE_TYPES u backend/game/views.py
+  availableCategories: CategoryOption[] = [
+    { key: 'club', label: 'Klub', locked: true },
+    { key: 'country', label: 'Reprezentacija' },
+    { key: 'confederation', label: 'Konfederacija' },
+    { key: 'coach', label: 'Trener' },
+    { key: 'hnl_nastupi', label: 'HNL nastupi' },
+    { key: 'hnl_golovi', label: 'HNL golovi' },
+  ];
+
+  selectedCategories: Record<string, boolean> = {
+    club: true,
+    country: true,
+    confederation: true,
+    coach: true,
+    hnl_nastupi: true,
+    hnl_golovi: true,
+  };
+
+  showCategorySelector = true;
+
+  // 'single' = obicna igra, '3'/'5' = best of serija
+  matchMode: 'single' | '3' | '5' = 'single';
+  matchId: string | null = null;
+  matchInfo: MatchSummary | null = null;
+  autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  get selectedCategoryKeys(): string[] {
+    return Object.entries(this.selectedCategories)
+      .filter(([_, checked]) => checked)
+      .map(([key]) => key);
+  }
+
+  get canStartGame(): boolean {
+    return this.selectedCategoryKeys.length >= 2;
+  }
+
+  toggleCategory(key: string) {
+    const cat = this.availableCategories.find(c => c.key === key);
+    if (cat?.locked) return;
+    this.selectedCategories[key] = !this.selectedCategories[key];
+  }
+
+  openCategorySelector() {
+    this.clearAutoAdvance();
+    this.showCategorySelector = true;
+    this.matchId = null;
+    this.matchInfo = null;
+    this.matchMode = 'single';
+  }
+
   gameId: string | null = null;
   board: Cell[][] = [];
   selectedPlayer = "Filip Bradarić";
@@ -26,6 +83,7 @@ export class AppComponent {
   selectedCell: { row: number, col: number } | null = null;
   players: any[] = [];
   filteredPlayers: any[] = [];
+  playersLoadError = false;
   possiblePlayers: any[] = [];
   searchTerm: string = "";
   showPicker = false;
@@ -34,9 +92,82 @@ export class AppComponent {
 
   constructor(private gameService: GameService) {}
 
+  onStartClick() {
+    if (!this.canStartGame) return;
+    if (this.matchMode === 'single') {
+      this.createGame();
+    } else {
+      this.createMatchSeries(parseInt(this.matchMode, 10));
+    }
+  }
+
   createGame() {
-    this.gameService.createGame().subscribe((res: GameResponse) => {
+    this.clearAutoAdvance();
+    this.gameService.createGame(this.selectedCategoryKeys).subscribe((res: GameResponse) => {
       this.gameId = res.game_id;
+      this.matchId = null;
+      this.matchInfo = null;
+      this.isFinished = false;
+      this.winner = null;
+      this.winningLine = null;
+      this.currentTurn = "X";
+      this.showCategorySelector = false;
+      this.loadGame();
+    });
+  }
+
+  createMatchSeries(bestOf: number) {
+    this.clearAutoAdvance();
+    this.gameService.createMatch(bestOf, this.selectedCategoryKeys).subscribe(res => {
+      this.matchId = res.match.match_id;
+      this.matchInfo = res.match;
+      this.gameId = res.game_id;
+      this.isFinished = false;
+      this.winner = null;
+      this.winningLine = null;
+      this.currentTurn = "X";
+      this.showCategorySelector = false;
+      this.loadGame();
+    });
+  }
+
+  confirmNextGame() {
+    if (!this.matchId) return;
+    if (this.winner) {
+      // igra je vec zavrsena, nema sto izgubiti - odmah idi dalje bez potvrde
+      this.clearAutoAdvance();
+      this.nextGame();
+      return;
+    }
+    const confirmed = window.confirm(
+      'Igra će se zabilježiti kao remi, a krenut će sljedeća igra u seriji. Jeste li sigurni?'
+    );
+    if (!confirmed) return;
+    this.clearAutoAdvance();
+    this.nextGame();
+  }
+
+  scheduleAutoNextGame() {
+    this.clearAutoAdvance();
+    this.autoAdvanceTimer = setTimeout(() => {
+      this.autoAdvanceTimer = null;
+      this.nextGame();
+    }, 2500);
+  }
+
+  clearAutoAdvance() {
+    if (this.autoAdvanceTimer) {
+      clearTimeout(this.autoAdvanceTimer);
+      this.autoAdvanceTimer = null;
+    }
+  }
+
+  nextGame() {
+    this.clearAutoAdvance();
+    if (!this.matchId) return;
+    this.gameService.nextGame(this.matchId).subscribe(res => {
+      this.gameId = res.game_id;
+      this.matchInfo = res.match;
       this.isFinished = false;
       this.winner = null;
       this.winningLine = null;
@@ -54,6 +185,10 @@ export class AppComponent {
       this.rowRules = res.row_rules;
       this.colRules = res.col_rules;
       this.winningLine = res.winning_line;
+      if (res.match) {
+        this.matchInfo = res.match;
+        this.matchId = res.match_id ?? this.matchId;
+      }
     });
   }
 
@@ -122,8 +257,14 @@ export class AppComponent {
         this.isFinished = res.is_finished;
         this.winner = res.winner;
         this.winningLine = res.winning_line;
+        if (res.match) {
+          this.matchInfo = res.match;
+        }
         if (this.winningLine) {
           this.updateWinningLine();
+        }
+        if (res.is_finished && res.match && !res.match.is_finished) {
+          this.scheduleAutoNextGame();
         }
       } else {
         this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';

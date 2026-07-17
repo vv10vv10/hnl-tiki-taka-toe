@@ -2,9 +2,62 @@
 
   <h1 class="game-title">Tiki Taka Toe</h1>
 
-  <button class="btn-new-game" (click)="createGame()">
-    New Game
+  <button class="btn-new-game" (click)="openCategorySelector()">
+    Nova igra
   </button>
+
+  <div *ngIf="showCategorySelector" class="category-panel">
+    <h2>Kategorije</h2>
+    <p class="category-hint">
+      Odaberi koje kategorije se pojavljuju na gridu. Potrebno je minimalno 2.
+    </p>
+
+    <div class="category-grid">
+      <label
+        class="category-item"
+        [class.category-locked]="cat.locked"
+        *ngFor="let cat of availableCategories"
+      >
+        <input
+          type="checkbox"
+          [checked]="selectedCategories[cat.key]"
+          [disabled]="cat.locked"
+          (change)="toggleCategory(cat.key)"
+        />
+        <span>{{ cat.label }}<span *ngIf="cat.locked" class="locked-tag"> (obavezno)</span></span>
+      </label>
+    </div>
+
+    <div class="mode-section">
+      <h3 class="mode-title">Način igre</h3>
+      <div class="mode-options">
+        <label class="mode-item">
+          <input type="radio" name="matchMode" value="single" [(ngModel)]="matchMode" />
+          <span>Pojedinačna igra</span>
+        </label>
+        <label class="mode-item">
+          <input type="radio" name="matchMode" value="3" [(ngModel)]="matchMode" />
+          <span>Best of 3</span>
+        </label>
+        <label class="mode-item">
+          <input type="radio" name="matchMode" value="5" [(ngModel)]="matchMode" />
+          <span>Best of 5</span>
+        </label>
+      </div>
+    </div>
+
+    <button
+      class="btn-new-game"
+      [disabled]="!canStartGame"
+      (click)="onStartClick()"
+    >
+      Započni igru
+    </button>
+
+    <p class="category-warning" *ngIf="!canStartGame">
+      Odaberi barem 2 kategorije.
+    </p>
+  </div>
 
   <div *ngIf="gameId" class="game-id">
     <p>Game ID: {{ gameId }}</p>
@@ -14,6 +67,19 @@
     Turn: {{ currentTurn || 'X' }}
   </h2>
 
+  <div *ngIf="matchInfo" class="match-score-row">
+    <div class="match-score">
+      Rezultat: X {{ matchInfo.x_wins }} - {{ matchInfo.o_wins }} O
+    </div>
+    <button
+      *ngIf="!matchInfo.is_finished"
+      class="btn-new-game btn-next-game"
+      (click)="confirmNextGame()"
+    >
+      {{ winner ? 'Sljedeća igra' : 'Zatraži remi' }}
+    </button>
+  </div>
+
   <div *ngIf="winner">
     <h2 *ngIf="winner !== 'draw'" class="winner-banner">
       Winner: {{ winner }} 🎉
@@ -22,6 +88,14 @@
     <h2 *ngIf="winner === 'draw'" class="winner-banner draw">
       Draw 🤝
     </h2>
+
+    <h2 *ngIf="matchInfo?.is_finished" class="winner-banner">
+      Pobjednik serije: {{ matchInfo?.winner }} 🏆
+    </h2>
+
+    <p *ngIf="matchInfo && !matchInfo.is_finished" class="auto-advance-hint">
+      Sljedeća igra kreće automatski...
+    </p>
   </div>
 
   <div *ngIf="board.length" class="board-card">

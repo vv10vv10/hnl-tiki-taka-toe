@@ -68,8 +68,23 @@ class Coach(models.Model):
     def __str__(self):
         return self.name
 
+class Match(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    best_of = models.IntegerField(default=3)  # 3 ili 5
+    categories = models.JSONField(default=list)  # odabrane kategorije, iste za sve igre u seriji
+    x_wins = models.IntegerField(default=0)
+    o_wins = models.IntegerField(default=0)
+    is_finished = models.BooleanField(default=False)
+    winner = models.CharField(max_length=1, null=True, blank=True)  # "X" ili "O"
+
+    def __str__(self):
+        return f"Match {self.id} (Bo{self.best_of})"
+
 class Game(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, null=True, blank=True, related_name="games")
+    game_number = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     is_finished = models.BooleanField(default=False)
     winner = models.CharField(max_length=100, null=True, blank=True)

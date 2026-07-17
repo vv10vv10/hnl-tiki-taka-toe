@@ -40,6 +40,162 @@
   transform: translateY(-2px);
 }
 
+.mode-section {
+  border-top: 1px solid #e5e5e5;
+  margin-top: 4px;
+  padding-top: 12px;
+  margin-bottom: 18px;
+}
+
+.mode-title {
+  color: #1a5c2e;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px;
+}
+
+.mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mode-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.mode-item input[type='radio'] {
+  width: 17px;
+  height: 17px;
+  accent-color: #1a5c2e;
+  cursor: pointer;
+}
+
+.auto-advance-hint {
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+  font-style: italic;
+  margin: 6px 0 0;
+}
+
+.match-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.btn-next-game {
+  margin-left: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+}
+
+.match-score {
+  color: white;
+  background: rgba(0,0,0,0.25);
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin: 8px 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.match-score-sub {
+  font-weight: 400;
+  opacity: 0.85;
+  font-size: 12px;
+}
+
+.category-panel {
+  display: inline-block;
+  background: white;
+  padding: 20px 24px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  margin-top: 16px;
+  text-align: left;
+  max-width: 420px;
+}
+
+.category-panel h2 {
+  color: #1a5c2e;
+  margin: 0 0 4px;
+}
+
+.category-hint {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  margin-bottom: 18px;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.category-item input[type='checkbox'] {
+  width: 17px;
+  height: 17px;
+  accent-color: #1a5c2e;
+  cursor: pointer;
+}
+
+.category-item.category-locked {
+  color: #999;
+  cursor: default;
+}
+
+.category-item.category-locked input[type='checkbox'] {
+  cursor: default;
+  accent-color: #999;
+}
+
+.locked-tag {
+  font-size: 11px;
+  color: #999;
+  font-weight: 400;
+}
+
+.category-panel .btn-new-game {
+  margin-left: 0;
+  width: 100%;
+}
+
+.category-panel .btn-new-game:disabled {
+  background: #cfcfcf;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.category-warning {
+  color: #e30613;
+  font-size: 13px;
+  margin: 8px 0 0;
+  text-align: center;
+}
+
 .game-id {
   color: rgba(255,255,255,0.75);
   font-size: 13px;

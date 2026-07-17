@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { GameResponse } from '../models/game.model';
+import { GameResponse, CreateMatchResponse, MatchSummary } from '../models/game.model';
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +11,25 @@ export class GameService {
 
   private api = 'http://127.0.0.1:8000/api';
 
-  createGame() {
-    return this.http.post<GameResponse>(`${this.api}/create-game/`, {});
+  createGame(categories?: string[]) {
+    const body = categories && categories.length ? { categories } : {};
+    return this.http.post<GameResponse>(`${this.api}/create-game/`, body);
+  }
+
+  createMatch(bestOf: number, categories?: string[]) {
+    const body: any = { best_of: bestOf };
+    if (categories && categories.length) {
+      body.categories = categories;
+    }
+    return this.http.post<CreateMatchResponse>(`${this.api}/create-match/`, body);
+  }
+
+  getMatch(matchId: string) {
+    return this.http.get<MatchSummary>(`${this.api}/match/${matchId}/`);
+  }
+
+  nextGame(matchId: string) {
+    return this.http.post<CreateMatchResponse>(`${this.api}/next-game/`, { match_id: matchId });
   }
 
   getGame(gameId: string) {
