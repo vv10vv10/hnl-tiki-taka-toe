@@ -1,9 +1,11 @@
 from django.shortcuts import render
+from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Player, Game, Cell, RowRule, ColRule, Country, Club, Confederation, Coach, Match
 from .serializer import PlayerSerializer
 import random
+import uuid
 from functools import partial
 from .engine.players import get_all_players
 from .engine.rules import apply_rule
@@ -204,6 +206,13 @@ def generate_valid_game(allowed_fields, match=None, game_number=1):
     for r in range(3):
         for c in range(3):
             Cell.objects.create(game=game, row=r, col=c)
+
+    # timer po potezu kreće odmah, OSIM za online match koji jos ceka drugog igraca
+    # (u tom slucaju ga upali join_match kad se protivnik pridruzi)
+    if not (match and match.is_online and not match.player_o_session):
+        game.turn_started_at = timezone.now()
+        game.save()
+
     return game
 
 def resolve_allowed_fields(requested_categories):
@@ -213,6 +222,20 @@ def resolve_allowed_fields(requested_categories):
     if not allowed_fields or len(allowed_fields) < 2:
         allowed_fields = RULE_TYPES
     return allowed_fields
+
+def check_and_handle_move_timeout(game, match):
+    """Provjerava je li istekao trenutni potez; ako jest, prebacuje red na
+    protivnika i resetira timer. Vraća broj preostalih sekundi (nakon eventualnog resetiranja)."""
+    if not game.turn_started_at:
+        return match.seconds_per_move
+    elapsed = (timezone.now() - game.turn_started_at).total_seconds()
+    remaining = match.seconds_per_move - elapsed
+    if remaining <= 0:
+        game.current_turn = "O" if game.current_turn == "X" else "X"
+        game.turn_started_at = timezone.now()
+        game.save()
+        return match.seconds_per_move
+    return int(remaining)
 
 # Create your views here.
 @api_view(['GET'])
@@ -228,6 +251,7 @@ def play_move(request):
     row = int(request.data.get("row"))
     col = int(request.data.get("col"))
     player_name = request.data.get("player_name")
+    session = request.data.get("session")
 
     try:
         game = Game.objects.get(id=game_id)
@@ -239,6 +263,17 @@ def play_move(request):
         return Response({"valid": False, "reason": "Missing data"})
     if row < 0 or row > 2 or col < 0 or col > 2:
         return Response({"valid": False, "reason": "Invalid board position"})
+
+    if game.match and game.match.is_online:
+        match = game.match
+        if not match.player_o_session:
+            return Response({"valid": False, "reason": "Waiting for opponent to join"})
+        if match.seconds_per_move:
+            check_and_handle_move_timeout(game, match)
+            game.refresh_from_db()
+        expected_session = str(match.player_x_session) if game.current_turn == "X" else str(match.player_o_session)
+        if not session or session != expected_session:
+            return Response({"valid": False, "reason": "Not your turn"})
 
     player = Player.objects.filter(name=player_name).first()
     if not player:
@@ -265,6 +300,7 @@ def play_move(request):
         cell.save()
 
     game.current_turn = "O" if game.current_turn == "X" else "X"
+    game.turn_started_at = timezone.now()
     cells = Cell.objects.filter(game=game)
     board = get_board(cells)
     winner_data = check_win(board)
@@ -323,21 +359,133 @@ def match_summary(match):
         "is_finished": match.is_finished,
         "winner": match.winner,
         "games_played": match.games.count(),
+        "is_online": match.is_online,
+        "seconds_per_move": match.seconds_per_move,
     }
 
 @api_view(['POST'])
 def create_match(request):
     best_of = request.data.get("best_of")
-    if best_of not in [3, 5]:
+    if best_of not in [1, 3, 5]:
         best_of = 3
     allowed_fields = resolve_allowed_fields(request.data.get("categories"))
+    is_online = bool(request.data.get("online"))
+    seconds_per_move = request.data.get("seconds_per_move") if is_online else None
 
-    match = Match.objects.create(best_of=best_of, categories=allowed_fields)
+    match = Match.objects.create(
+        best_of=best_of,
+        categories=allowed_fields,
+        is_online=is_online,
+        seconds_per_move=seconds_per_move,
+    )
+    if is_online:
+        match.player_x_session = uuid.uuid4()
+        match.save()
+
     game = generate_valid_game(allowed_fields, match=match, game_number=1)
 
-    return Response({
+    response_data = {
         "match": match_summary(match),
         "game_id": str(game.id)
+    }
+    if is_online:
+        response_data["your_session"] = str(match.player_x_session)
+        response_data["your_symbol"] = "X"
+    return Response(response_data)
+
+@api_view(['POST'])
+def join_match(request, match_id):
+    try:
+        match = Match.objects.get(id=match_id)
+    except Match.DoesNotExist:
+        return Response({"error": "Match not found"}, status=404)
+    if not match.is_online:
+        return Response({"error": "Match nije online tip"}, status=400)
+
+    session = request.data.get("session")
+
+    # ako se igrac vraca (npr. refresh stranice), prepoznaj ga po postojecem sessionu
+    if match.player_o_session and session == str(match.player_o_session):
+        return Response({
+            "your_session": str(match.player_o_session),
+            "your_symbol": "O",
+            "match": match_summary(match)
+        })
+    if match.player_x_session and session == str(match.player_x_session):
+        return Response({
+            "your_session": str(match.player_x_session),
+            "your_symbol": "X",
+            "match": match_summary(match)
+        })
+    if match.player_o_session:
+        return Response({"error": "Match je već pun"}, status=400)
+
+    match.player_o_session = uuid.uuid4()
+    match.save()
+
+    current_game = match.games.filter(is_finished=False).order_by('-game_number').first()
+    if current_game and not current_game.turn_started_at:
+        current_game.turn_started_at = timezone.now()
+        current_game.save()
+
+    return Response({
+        "your_session": str(match.player_o_session),
+        "your_symbol": "O",
+        "match": match_summary(match)
+    })
+
+@api_view(['GET'])
+def match_state(request, match_id):
+    session = request.GET.get('session')
+    try:
+        match = Match.objects.get(id=match_id)
+    except Match.DoesNotExist:
+        return Response({"error": "Match not found"}, status=404)
+
+    game = match.games.order_by('-game_number').first()
+    if not game:
+        return Response({"error": "Game not found"}, status=404)
+
+    your_symbol = None
+    if session:
+        if match.player_x_session and str(match.player_x_session) == session:
+            your_symbol = "X"
+        elif match.player_o_session and str(match.player_o_session) == session:
+            your_symbol = "O"
+
+    seconds_remaining = None
+    if match.is_online and match.seconds_per_move and match.player_o_session and not game.is_finished:
+        seconds_remaining = check_and_handle_move_timeout(game, match)
+        game.refresh_from_db()
+
+    cells = Cell.objects.filter(game=game)
+    board = get_board(cells)
+    winning_line = None
+    if game.is_finished and game.winner not in (None, "draw"):
+        winner_data = check_win(board)
+        if winner_data:
+            winning_line = winner_data["line"]
+
+    return Response({
+        "game_id": str(game.id),
+        "game_number": game.game_number,
+        "board": board,
+        "row_rules": [
+            {"index": r.index, "field": r.field, "value": r.value, "display": r.display}
+            for r in game.row_rules.all()
+        ],
+        "col_rules": [
+            {"index": c.index, "field": c.field, "value": c.value, "display": c.display}
+            for c in game.col_rules.all()
+        ],
+        "current_turn": game.current_turn,
+        "is_finished": game.is_finished,
+        "winner": game.winner,
+        "winning_line": winning_line,
+        "your_symbol": your_symbol,
+        "seconds_remaining": seconds_remaining,
+        "waiting_for_opponent": match.is_online and not match.player_o_session,
+        "match": match_summary(match),
     })
 
 @api_view(['GET'])

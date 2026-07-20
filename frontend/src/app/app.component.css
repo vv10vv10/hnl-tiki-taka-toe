@@ -78,6 +78,46 @@
   cursor: pointer;
 }
 
+.online-toggle {
+  border-top: 1px solid #e5e5e5;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.online-toggle .mode-item input[type='checkbox'] {
+  width: 17px;
+  height: 17px;
+  accent-color: #1a5c2e;
+  cursor: pointer;
+}
+
+.online-options {
+  margin-top: 8px;
+  margin-left: 25px;
+  font-size: 13px;
+  color: #444;
+}
+
+.friend-link-box {
+  margin: 12px 0;
+  text-align: center;
+}
+
+.friend-link-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.friend-link-row input {
+  flex: 1;
+  max-width: 320px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
 .auto-advance-hint {
   color: rgba(255,255,255,0.75);
   font-size: 13px;

@@ -44,6 +44,21 @@
           <span>Best of 5</span>
         </label>
       </div>
+
+      <div class="online-toggle">
+        <label class="mode-item">
+          <input type="checkbox" [(ngModel)]="onlineEnabled" />
+          <span>Igraj s prijateljem (online, preko linka)</span>
+        </label>
+        <div *ngIf="onlineEnabled" class="online-options">
+          <label>Vrijeme po potezu: </label>
+          <select [(ngModel)]="onlineSecondsPerMove">
+            <option [ngValue]="30">30s</option>
+            <option [ngValue]="60">60s</option>
+            <option [ngValue]="90">90s</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <button
@@ -59,12 +74,30 @@
     </p>
   </div>
 
+  <div *ngIf="friendLink" class="friend-link-box">
+    <p>Pošalji ovaj link prijatelju da se pridruži:</p>
+    <div class="friend-link-row">
+      <input type="text" readonly [value]="friendLink" (click)="$any($event.target).select()" />
+      <button class="btn-new-game" (click)="copyFriendLink()">Kopiraj</button>
+    </div>
+    <p *ngIf="waitingForOpponent" class="category-hint">Čeka se da se prijatelj pridruži...</p>
+  </div>
+
+  <p *ngIf="isFriendMode && mySymbol && !waitingForOpponent" class="category-hint">
+    Ti igraš kao {{ mySymbol }}
+  </p>
+
   <div *ngIf="gameId" class="game-id">
     <p>Game ID: {{ gameId }}</p>
   </div>
 
-  <h2 *ngIf="gameId && !winner" class="turn-indicator">
+  <h2 *ngIf="gameId && !winner && !isFriendMode" class="turn-indicator">
     Turn: {{ currentTurn || 'X' }}
+  </h2>
+
+  <h2 *ngIf="gameId && !winner && isFriendMode && !waitingForOpponent" class="turn-indicator">
+    {{ isMyTurn ? 'Tvoj red' : 'Red igrača ' + currentTurn }}
+    <span *ngIf="secondsRemaining !== null"> ({{ secondsRemaining }}s)</span>
   </h2>
 
   <div *ngIf="matchInfo" class="match-score-row">

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { GameService } from './services/game.service';
@@ -18,7 +18,7 @@ interface CategoryOption {
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   // mora se poklapati s RULE_TYPES u backend/game/views.py
   availableCategories: CategoryOption[] = [
     { key: 'club', label: 'Klub', locked: true },
@@ -46,6 +46,17 @@ export class AppComponent {
   matchInfo: MatchSummary | null = null;
   autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // play with a friend (online preko linka)
+  onlineEnabled = false;
+  onlineSecondsPerMove = 60;
+  isFriendMode = false;
+  friendLink: string | null = null;
+  mySession: string | null = null;
+  mySymbol: string | null = null;
+  waitingForOpponent = false;
+  secondsRemaining: number | null = null;
+  private pollingInterval: ReturnType<typeof setInterval> | null = null;
+
   get selectedCategoryKeys(): string[] {
     return Object.entries(this.selectedCategories)
       .filter(([_, checked]) => checked)
@@ -56,6 +67,10 @@ export class AppComponent {
     return this.selectedCategoryKeys.length >= 2;
   }
 
+  get isMyTurn(): boolean {
+    return this.mySymbol === this.currentTurn;
+  }
+
   toggleCategory(key: string) {
     const cat = this.availableCategories.find(c => c.key === key);
     if (cat?.locked) return;
@@ -64,10 +79,18 @@ export class AppComponent {
 
   openCategorySelector() {
     this.clearAutoAdvance();
+    this.stopPolling();
     this.showCategorySelector = true;
     this.matchId = null;
     this.matchInfo = null;
     this.matchMode = 'single';
+    this.isFriendMode = false;
+    this.friendLink = null;
+    this.mySession = null;
+    this.mySymbol = null;
+    this.waitingForOpponent = false;
+    this.secondsRemaining = null;
+    this.onlineEnabled = false;
   }
 
   gameId: string | null = null;
@@ -92,8 +115,28 @@ export class AppComponent {
 
   constructor(private gameService: GameService) {}
 
+  ngOnInit() {
+    this.gameService.getPlayers().subscribe(res => {
+      this.players = res;
+      this.filteredPlayers = res;
+    });
+
+    const match = window.location.pathname.match(/\/match\/([0-9a-fA-F-]{36})/);
+    if (match) {
+      this.joinFriendMatch(match[1]);
+    }
+  }
+
+  ngOnDestroy() {
+    this.stopPolling();
+  }
+
   onStartClick() {
     if (!this.canStartGame) return;
+    if (this.onlineEnabled) {
+      this.startFriendMatch();
+      return;
+    }
     if (this.matchMode === 'single') {
       this.createGame();
     } else {
@@ -128,6 +171,89 @@ export class AppComponent {
       this.currentTurn = "X";
       this.showCategorySelector = false;
       this.loadGame();
+    });
+  }
+
+  startFriendMatch() {
+    if (!this.canStartGame) return;
+    this.clearAutoAdvance();
+    const bestOf = this.matchMode === 'single' ? 1 : parseInt(this.matchMode, 10);
+    this.gameService.createMatch(bestOf, this.selectedCategoryKeys, true, this.onlineSecondsPerMove)
+      .subscribe(res => {
+        this.isFriendMode = true;
+        this.matchId = res.match.match_id;
+        this.matchInfo = res.match;
+        this.gameId = res.game_id;
+        this.mySession = res.your_session ?? null;
+        this.mySymbol = res.your_symbol ?? null;
+        if (this.mySession && this.matchId) {
+          localStorage.setItem(`ttt-session-${this.matchId}`, this.mySession);
+        }
+        this.friendLink = `${window.location.origin}/match/${this.matchId}`;
+        this.isFinished = false;
+        this.winner = null;
+        this.winningLine = null;
+        this.showCategorySelector = false;
+        this.waitingForOpponent = true;
+        this.startPolling();
+      });
+  }
+
+  joinFriendMatch(matchId: string) {
+    this.isFriendMode = true;
+    this.showCategorySelector = false;
+    const storedSession = localStorage.getItem(`ttt-session-${matchId}`);
+    this.gameService.joinMatch(matchId, storedSession || undefined).subscribe(res => {
+      this.matchId = matchId;
+      this.mySession = res.your_session;
+      this.mySymbol = res.your_symbol;
+      localStorage.setItem(`ttt-session-${matchId}`, res.your_session);
+      this.matchInfo = res.match;
+      this.startPolling();
+    });
+  }
+
+  copyFriendLink() {
+    if (!this.friendLink) return;
+    navigator.clipboard.writeText(this.friendLink);
+  }
+
+  startPolling() {
+    this.stopPolling();
+    this.pollMatchState();
+    this.pollingInterval = setInterval(() => this.pollMatchState(), 1500);
+  }
+
+  stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+  }
+
+  pollMatchState() {
+    if (!this.matchId) return;
+    this.gameService.getMatchState(this.matchId, this.mySession || undefined).subscribe(res => {
+      this.gameId = res.game_id;
+      this.board = res.board;
+      this.rowRules = res.row_rules;
+      this.colRules = res.col_rules;
+      this.currentTurn = res.current_turn;
+      this.isFinished = res.is_finished;
+      this.winner = res.winner;
+      this.winningLine = res.winning_line;
+      this.matchInfo = res.match;
+      this.waitingForOpponent = res.waiting_for_opponent;
+      this.secondsRemaining = res.seconds_remaining;
+      if (res.your_symbol) {
+        this.mySymbol = res.your_symbol;
+      }
+      if (this.winningLine) {
+        this.updateWinningLine();
+      }
+      if (res.match.is_finished) {
+        this.stopPolling();
+      }
     });
   }
 
@@ -172,6 +298,10 @@ export class AppComponent {
       this.winner = null;
       this.winningLine = null;
       this.currentTurn = "X";
+      if (this.isFriendMode) {
+        // sljedeci poll ce pokupiti novi game preko match state-a
+        return;
+      }
       this.loadGame();
     });
   }
@@ -197,6 +327,9 @@ export class AppComponent {
       this.showPossiblePlayers(row, col);
       return;
     }
+    if (this.isFriendMode && (this.waitingForOpponent || !this.isMyTurn)) {
+      return;
+    }
     const cell = this.board[row][col];
     if (!cell.symbol) {
       this.selectedCell = { row, col };
@@ -218,13 +351,6 @@ export class AppComponent {
       x2: last[1] * 60 + 30,
       y2: last[0] * 60 + 30,
     };
-  }
-
-  ngOnInit() {
-    this.gameService.getPlayers().subscribe(res => {
-      this.players = res;
-      this.filteredPlayers = res;
-    });
   }
 
   onSearchChange(value: string) {
@@ -249,7 +375,8 @@ export class AppComponent {
       game_id: this.gameId,
       row: this.selectedCell.row,
       col: this.selectedCell.col,
-      player_name: player.name
+      player_name: player.name,
+      session: this.mySession || undefined
     }).subscribe(res => {
       if (res.valid) {
         this.board = res.board;
@@ -264,7 +391,11 @@ export class AppComponent {
           this.updateWinningLine();
         }
         if (res.is_finished && res.match && !res.match.is_finished) {
-          this.scheduleAutoNextGame();
+          // u friend modu samo X (kreator) automatski pokrece sljedecu igru,
+          // da ne dodje do dvostrukog poziva kad oba klijenta reagiraju na kraj
+          if (!this.isFriendMode || this.mySymbol === 'X') {
+            this.scheduleAutoNextGame();
+          }
         }
       } else {
         this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
