@@ -55,6 +55,8 @@ export class AppComponent implements OnInit, OnDestroy {
   mySymbol: string | null = null;
   waitingForOpponent = false;
   secondsRemaining: number | null = null;
+  joinCodeInput = '';
+  joinCodeError: string | null = null;
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
 
   get selectedCategoryKeys(): string[] {
@@ -91,6 +93,8 @@ export class AppComponent implements OnInit, OnDestroy {
     this.waitingForOpponent = false;
     this.secondsRemaining = null;
     this.onlineEnabled = false;
+    this.joinCodeInput = '';
+    this.joinCodeError = null;
   }
 
   gameId: string | null = null;
@@ -216,6 +220,32 @@ export class AppComponent implements OnInit, OnDestroy {
   copyFriendLink() {
     if (!this.friendLink) return;
     navigator.clipboard.writeText(this.friendLink);
+  }
+
+  joinWithCode() {
+    const code = this.joinCodeInput.trim().toUpperCase();
+    this.joinCodeError = null;
+    if (!code) {
+      this.joinCodeError = 'Unesi kod.';
+      return;
+    }
+    this.gameService.joinByCode(code).subscribe({
+      next: res => {
+        this.isFriendMode = true;
+        this.showCategorySelector = false;
+        this.matchId = res.match.match_id;
+        this.mySession = res.your_session;
+        this.mySymbol = res.your_symbol;
+        localStorage.setItem(`ttt-session-${this.matchId}`, res.your_session);
+        this.matchInfo = res.match;
+        // ažurira i URL da refresh/dijeljenje i dalje radi preko istog matcha
+        window.history.replaceState({}, '', `/match/${this.matchId}`);
+        this.startPolling();
+      },
+      error: err => {
+        this.joinCodeError = err?.error?.error || 'Kod nije pronađen.';
+      }
+    });
   }
 
   startPolling() {
