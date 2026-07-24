@@ -266,8 +266,10 @@ def resolve_symbol(request, game):
     return symbol if symbol in ("X", "O") else None
 
 def generate_join_code():
+    # bez I, O, 0, 1 - lako se pobrkaju kod prepisivanja/citanja koda
+    safe_chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     while True:
-        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        code = ''.join(random.choices(safe_chars, k=6))
         if not Match.objects.filter(join_code=code).exists():
             return code
 
@@ -429,12 +431,9 @@ def create_match(request):
         response_data["your_symbol"] = "X"
     return Response(response_data)
 
-@api_view(['POST'])
-def join_match(request, match_id):
-    try:
-        match = Match.objects.get(id=match_id)
-    except Match.DoesNotExist:
-        return Response({"error": "Match not found"}, status=404)
+def _do_join_match(request, match):
+    """Zajednička logika za pridruzivanje meču - koriste je i join_match (preko
+    linka/URL-a) i join_by_code (preko šifre), bez dvostrukog omatanja request-a."""
     if not match.is_online:
         return Response({"error": "Match nije online tip"}, status=400)
 
@@ -471,6 +470,14 @@ def join_match(request, match_id):
     })
 
 @api_view(['POST'])
+def join_match(request, match_id):
+    try:
+        match = Match.objects.get(id=match_id)
+    except Match.DoesNotExist:
+        return Response({"error": "Match not found"}, status=404)
+    return _do_join_match(request, match)
+
+@api_view(['POST'])
 def join_by_code(request):
     code = (request.data.get("code") or "").strip().upper()
     if not code:
@@ -479,7 +486,7 @@ def join_by_code(request):
         match = Match.objects.get(join_code=code)
     except Match.DoesNotExist:
         return Response({"error": "Kod nije pronađen"}, status=404)
-    return join_match(request, match.id)
+    return _do_join_match(request, match)
 
 @api_view(['GET'])
 def match_state(request, match_id):
