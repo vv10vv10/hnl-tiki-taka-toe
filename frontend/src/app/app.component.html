@@ -89,19 +89,15 @@
       <input type="text" readonly [value]="friendLink" (click)="$any($event.target).select()" />
       <button class="btn-new-game" (click)="copyFriendLink()">Kopiraj</button>
     </div>
-    <p *ngIf="matchInfo?.join_code" class="category-hint">
+    <p *ngIf="matchInfo?.join_code" class="category-hint hint-on-dark">
       Ili unese kod: <strong>{{ matchInfo?.join_code }}</strong>
     </p>
-    <p *ngIf="waitingForOpponent" class="category-hint">Čeka se da se prijatelj pridruži...</p>
+    <p *ngIf="waitingForOpponent" class="category-hint hint-on-dark">Čeka se da se prijatelj pridruži...</p>
   </div>
 
-  <p *ngIf="isFriendMode && mySymbol && !waitingForOpponent" class="category-hint">
+  <p *ngIf="isFriendMode && mySymbol && !waitingForOpponent" class="category-hint hint-on-dark">
     Ti igraš kao {{ mySymbol }}
   </p>
-
-  <div *ngIf="gameId" class="game-id">
-    <p>Game ID: {{ gameId }}</p>
-  </div>
 
   <h2 *ngIf="gameId && !winner && !isFriendMode" class="turn-indicator">
     Turn: {{ currentTurn || 'X' }}
@@ -131,7 +127,7 @@
     class="pass-turn-row"
   >
     <button class="btn-new-game btn-pass-turn" (click)="passTurn()">
-      Predaj red protivniku
+      Ne znam, predaj red
     </button>
   </div>
 
@@ -234,7 +230,7 @@
             {{ cell.player }}
           </div>
           <div class="cell-hint" *ngIf="!cell.symbol && canPlayCell(cell)">
-            Odaberi igrača
+            Izaberi igrača
           </div>
         </div>
       </div>
