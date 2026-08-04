@@ -89,12 +89,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // objasnjenja pravila prikazana ispod grida - kljuc mora odgovarati RULE_TYPES iz backend/game/views.py
   categoryExplanations: Record<string, string> = {
-    country: 'Reprezentacija — državljanstvo za tu državu.',
-    club: 'Klub — nastupi za klub broje se od 2007. godine.',
-    confederation: 'Konfederacija — državljanstvo reprezentacije s tog kontinenta.',
-    coach: 'Trener — igrač je u karijeri igrao pod tim trenerom.',
-    hnl_nastupi: 'HNL nastupi — broje se od 2007. godine.',
-    hnl_golovi: 'HNL golovi — broje se od 2007. godine.',
+    country: 'Reprezentacija - državljanstvo za tu državu.',
+    club: 'Klub - nastupi za klub broje se od 2007. godine.',
+    confederation: 'Konfederacija - državljanstvo reprezentacije s tog kontinenta.',
+    coach: 'Trener - igrač je u karijeri igrao pod tim trenerom.',
+    hnl_nastupi: 'HNL nastupi - broje se od 2007. godine.',
+    hnl_golovi: 'HNL golovi - broje se od 2007. godine.',
   };
 
   get activeExplanations(): string[] {

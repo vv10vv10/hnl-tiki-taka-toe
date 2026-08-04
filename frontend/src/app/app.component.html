@@ -131,7 +131,7 @@
     class="pass-turn-row"
   >
     <button class="btn-new-game btn-pass-turn" (click)="passTurn()">
-      Ne znam, predaj red
+      Predaj red protivniku
     </button>
   </div>
 
@@ -234,7 +234,7 @@
             {{ cell.player }}
           </div>
           <div class="cell-hint" *ngIf="!cell.symbol && canPlayCell(cell)">
-            Izaberi igrača
+            Odaberi igrača
           </div>
         </div>
       </div>
