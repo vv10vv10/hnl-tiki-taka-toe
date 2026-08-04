@@ -241,6 +241,10 @@
     </div>
   </div>
 
+  <div *ngIf="board.length && activeExplanations.length" class="rules-legend">
+    <p *ngFor="let text of activeExplanations" class="rules-legend-item">{{ text }}</p>
+  </div>
+
   <div *ngIf="showPicker" class="modal">
     <div class="player-list-box">
       <div class="picker-header">
