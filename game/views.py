@@ -99,9 +99,31 @@ CLUB_DISPLAY_OVERRIDES = {
 
 # isti princip - u bazi ostaju kratice (za pretragu), prikaz je razumljiviji
 CONFEDERATION_DISPLAY_OVERRIDES = {
-    "AFC": "Azija i Australija (AFC)",
+    "AFC": "Azija (AFC)",
     "CAF": "Afrika (CAF)",
     "CONMEBOL": "Južna Amerika (CONMEBOL)",
+}
+
+# ime u bazi (za pretragu) ostaje izvorno englesko ime iz Transfermarkta, ovdje se
+# samo mijenja kako se drzava prikazuje igracima na gridu
+COUNTRY_DISPLAY_OVERRIDES = {
+    "Albania": "Albanija",
+    "Argentina": "Argentina",
+    "Australia": "Australija",
+    "Austria": "Austrija",
+    "Bosnia-Herzegovina": "Bosna i Hercegovina",
+    "Brazil": "Brazil",
+    "Croatia": "Hrvatska",
+    "Japan": "Japan",
+    "Kosovo": "Kosovo",
+    "Montenegro": "Crna Gora",
+    "North Macedonia": "Sjeverna Makedonija",
+    "Portugal": "Portugal",
+    "Serbia": "Srbija",
+    "Slovenia": "Slovenija",
+    "Spain": "Španjolska",
+    "Switzerland": "Švicarska",
+    "Ukraine": "Ukrajina",
 }
 
 def random_rule(allowed_fields=None):
@@ -109,7 +131,7 @@ def random_rule(allowed_fields=None):
     field = random.choice(fields)
     if field == "country":
         value = random.choice(VALID_COUNTRIES)
-        display = value
+        display = COUNTRY_DISPLAY_OVERRIDES.get(value, value)
     elif field == "club":
         value = random.choice(VALID_CLUBS)
         display = CLUB_DISPLAY_OVERRIDES.get(value, value)
