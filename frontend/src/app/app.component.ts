@@ -58,6 +58,7 @@ export class AppComponent implements OnInit, OnDestroy {
   joinCodeInput = '';
   joinCodeError: string | null = null;
   drawRequestedBy: string | null = null;
+  playersLastUpdated: string | null = null;
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
 
   get selectedCategoryKeys(): string[] {
@@ -137,6 +138,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.gameService.getPlayers().subscribe(res => {
       this.players = res;
       this.filteredPlayers = res;
+    });
+
+    this.gameService.getPlayersMeta().subscribe(res => {
+      this.playersLastUpdated = res.last_updated;
     });
 
     const match = window.location.pathname.match(/\/match\/([0-9a-fA-F-]{36})/);
@@ -410,6 +415,27 @@ export class AppComponent implements OnInit, OnDestroy {
         this.matchInfo = res.match;
         this.matchId = res.match_id ?? this.matchId;
       }
+    });
+  }
+
+  canPlayCell(cell: Cell): boolean {
+    if (cell.symbol) return false;
+    if (this.isFinished) return false;
+    if (this.drawRequestedBy) return false;
+    if (this.isFriendMode && (this.waitingForOpponent || !this.isMyTurn)) return false;
+    return true;
+  }
+
+  passTurn() {
+    if (!this.gameId || this.winner || this.drawRequestedBy) return;
+    if (this.isFriendMode && (this.waitingForOpponent || !this.isMyTurn)) return;
+    const symbol = this.isFriendMode ? this.mySymbol : this.currentTurn;
+    if (!symbol) return;
+    this.gameService.passTurn(this.gameId, {
+      symbol,
+      session: this.mySession || undefined
+    }).subscribe(res => {
+      this.currentTurn = res.current_turn;
     });
   }
 

@@ -126,6 +126,15 @@
     </button>
   </div>
 
+  <div
+    *ngIf="matchInfo && !matchInfo.is_finished && !winner && !drawRequestedBy && (!isFriendMode || (isMyTurn && !waitingForOpponent))"
+    class="pass-turn-row"
+  >
+    <button class="btn-new-game btn-pass-turn" (click)="passTurn()">
+      Ne znam, predaj red
+    </button>
+  </div>
+
   <div *ngIf="drawRequestedBy && isWaitingForMyDrawResponse" class="draw-request-banner">
     <p>Čekaš potvrdu protivnika za remi...</p>
     <button class="btn-new-game btn-decline-draw" (click)="respondToDraw(false)">Odustani</button>
@@ -212,8 +221,20 @@
               <text x="50" y="68" class="jersey-letter" text-anchor="middle">{{ cell.symbol }}</text>
             </svg>
           </div>
+          <div *ngIf="!cell.symbol && canPlayCell(cell)" class="jersey-wrap jersey-empty">
+            <svg viewBox="0 0 100 110" class="jersey-svg">
+              <path
+                class="jersey-shape-empty"
+                d="M35,6 C38,14 44,19 50,19 C56,19 62,14 65,6 L88,24 L76,40 L69,34 L69,100 L31,100 L31,34 L24,40 L12,24 Z"
+              />
+              <text x="50" y="68" class="jersey-plus" text-anchor="middle">+</text>
+            </svg>
+          </div>
           <div class="cell-player" *ngIf="cell.symbol">
             {{ cell.player }}
+          </div>
+          <div class="cell-hint" *ngIf="!cell.symbol && canPlayCell(cell)">
+            Izaberi igrača
           </div>
         </div>
       </div>
@@ -261,5 +282,9 @@
   <div *ngIf="showInvalidMoveFeedback" class="invalid-move">
     Invalid move ❌
   </div>
+
+  <p *ngIf="playersLastUpdated" class="players-updated-note">
+    Baza igrača ažurirana: {{ playersLastUpdated }}
+  </p>
 
 </div>

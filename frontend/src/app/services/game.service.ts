@@ -64,6 +64,10 @@ export class GameService {
     return this.http.get<any[]>(`${this.api}/players/`);
   }
 
+  getPlayersMeta() {
+    return this.http.get<{ last_updated: string }>(`${this.api}/players-meta/`);
+  }
+
   playMove(data: {
     game_id: string;
     row: number;
@@ -89,6 +93,12 @@ export class GameService {
   respondDraw(gameId: string, data: { accept: boolean; symbol: string; session?: string }) {
     return this.http.post<{ is_finished: boolean; winner: string | null; draw_requested_by: string | null }>(
       `${this.api}/game/${gameId}/respond-draw/`, data
+    );
+  }
+
+  passTurn(gameId: string, data: { symbol: string; session?: string }) {
+    return this.http.post<{ current_turn: string }>(
+      `${this.api}/game/${gameId}/pass-turn/`, data
     );
   }
 }

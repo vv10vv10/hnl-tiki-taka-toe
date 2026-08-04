@@ -433,6 +433,53 @@
   line-height: 1.1;
 }
 
+/* Prazno polje na koje se trenutno moze igrati */
+
+.jersey-shape-empty {
+  fill: #e2f1e6;
+  stroke: #1a5c2e;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.jersey-plus {
+  fill: #1a5c2e;
+  font-size: 40px;
+  font-weight: 800;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.cell-hint {
+  font-size: 9px;
+  color: #1a5c2e;
+  margin-top: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.pass-turn-row {
+  margin: 0 0 12px;
+}
+
+.btn-pass-turn {
+  margin-left: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+  background: #555;
+}
+
+.btn-pass-turn:hover {
+  background: #6b6b6b;
+}
+
+.players-updated-note {
+  color: rgba(255,255,255,0.65);
+  font-size: 11px;
+  margin-top: 20px;
+}
+
 .invalid-move {
   color: #e30613;
   background: white;

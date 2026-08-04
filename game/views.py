@@ -13,6 +13,9 @@ from .engine.rules import apply_rule
 from .engine.board import get_board
 from .engine.logic import check_win, is_draw
 
+# rucno azuriraj ovaj datum svaki put kad se odradi novi import igraca (data/ skripte)
+PLAYERS_LAST_UPDATED = "15.7.2026."
+
 RULE_TYPES = [
     "country",
     "club",
@@ -210,7 +213,8 @@ def board_is_valid(game):
     return True
 
 def generate_valid_game(allowed_fields, match=None, game_number=1):
-    game = Game.objects.create(match=match, game_number=game_number)
+    starting_turn = random.choice(["X", "O"])
+    game = Game.objects.create(match=match, game_number=game_number, current_turn=starting_turn)
     while True:
         create_rules(game, allowed_fields)
         if board_is_valid(game):
@@ -279,6 +283,11 @@ def players(request):
     players = Player.objects.all()
     serializer = PlayerSerializer(players, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def players_meta(request):
+    return Response({"last_updated": PLAYERS_LAST_UPDATED})
 
 
 @api_view(['POST'])
@@ -627,6 +636,28 @@ def respond_draw(request, game_id):
         "winner": game.winner,
         "draw_requested_by": None,
     })
+
+@api_view(['POST'])
+def pass_turn(request, game_id):
+    try:
+        game = Game.objects.select_related('match').get(id=game_id)
+    except Game.DoesNotExist:
+        return Response({"error": "Game not found"}, status=404)
+    if game.is_finished:
+        return Response({"error": "Igra je već završena"}, status=400)
+    if game.draw_requested_by:
+        return Response({"error": "Ne možeš predati red dok je aktivan zahtjev za remi"}, status=400)
+
+    symbol = resolve_symbol(request, game)
+    if symbol not in ("X", "O"):
+        return Response({"error": "Nepoznat igrač"}, status=400)
+    if symbol != game.current_turn:
+        return Response({"error": "Nije tvoj red"}, status=400)
+
+    game.current_turn = "O" if game.current_turn == "X" else "X"
+    game.turn_started_at = timezone.now()
+    game.save()
+    return Response({"current_turn": game.current_turn})
 
 @api_view(['GET'])
 def get_game(request, game_id):
