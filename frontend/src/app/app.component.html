@@ -84,7 +84,7 @@
   </div>
 
   <div *ngIf="friendLink" class="friend-link-box">
-    <p>Pošalji ovaj link prijatelju da se pridruži:</p>
+    <p class="hint-on-dark">Pošalji ovaj link prijatelju da se pridruži:</p>
     <div class="friend-link-row">
       <input type="text" readonly [value]="friendLink" (click)="$any($event.target).select()" />
       <button class="btn-new-game" (click)="copyFriendLink()">Kopiraj</button>
