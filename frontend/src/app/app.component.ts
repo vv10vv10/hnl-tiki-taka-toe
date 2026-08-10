@@ -147,6 +147,15 @@ export class AppComponent implements OnInit, OnDestroy {
     this.joinCodeInput = '';
     this.joinCodeError = null;
     this.drawRequestedBy = null;
+    this.gameId = null;
+    this.board = [];
+    this.currentTurn = null;
+    this.isFinished = false;
+    this.winner = null;
+    this.winningLine = null;
+    this.selectedCell = null;
+    this.showPicker = false;
+    this.showPossiblePlayersModal = false;
   }
 
   gameId: string | null = null;
