@@ -1,307 +1,637 @@
-<div class="game-container">
+* {
+  box-sizing: border-box;
+}
 
-  <h1 class="game-title">Tiki Taka Toe: HNL Edition</h1>
+.game-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  text-align: center;
+}
 
-  <button class="btn-new-game" *ngIf="!showCategorySelector" (click)="openCategorySelector()">
-    Nova igra
-  </button>
+.game-title {
+  color: #ffffff;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  margin-bottom: 20px;
+  border-bottom: 4px solid #e30613;
+  display: inline-block;
+  padding-bottom: 8px;
+}
 
-  <!-- KORAK 1: odabir nacina igre -->
-  <div *ngIf="showCategorySelector && setupStep === 'mode'" class="category-panel mode-select-panel">
-    <h2>Nova igra</h2>
-    <p class="category-hint">Kako želite igrati?</p>
+.btn-new-game {
+  background: #e30613;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  transition: transform 0.15s, background 0.15s;
+  margin-left: 20px;
+}
 
-    <div class="play-mode-grid">
-      <button type="button" class="play-mode-card" (click)="chooseMode('local')">
-        <span class="play-mode-icon">🖥️</span>
-        <span class="play-mode-label">Isti uređaj</span>
-        <span class="play-mode-sub">Naizmjenično, jedan telefon ili računalo</span>
-      </button>
-      <button type="button" class="play-mode-card" (click)="chooseMode('online')">
-        <span class="play-mode-icon">🌐</span>
-        <span class="play-mode-label">Protiv prijatelja</span>
-        <span class="play-mode-sub">Svatko na svom uređaju, preko linka/koda</span>
-      </button>
-    </div>
+.btn-new-game:hover {
+  background: #ff1a2b;
+  transform: translateY(-2px);
+}
 
-    <div class="join-code-section">
-      <p class="category-hint">Ili se pridruži postojećoj igri preko koda:</p>
-      <div class="friend-link-row">
-        <input type="text" class="code-input" placeholder="npr. A1B2C3" [(ngModel)]="joinCodeInput" maxlength="6" />
-        <button class="btn-new-game" (click)="joinWithCode()">Pridruži se</button>
-      </div>
-      <p *ngIf="joinCodeError" class="category-warning">{{ joinCodeError }}</p>
-    </div>
-  </div>
+.mode-section {
+  border-top: 1px solid #e5e5e5;
+  margin-top: 4px;
+  padding-top: 12px;
+  margin-bottom: 18px;
+}
 
-  <!-- KORAK 2: kategorije, broj utakmica, opcije za odabrani nacin -->
-  <div *ngIf="showCategorySelector && setupStep === 'options'" class="category-panel">
-    <button type="button" class="btn-back" (click)="backToModeSelect()">← Nazad</button>
-    <h2>{{ selectedPlayMode === 'online' ? 'Igra s prijateljem' : 'Igra na istom uređaju' }}</h2>
-    <p class="category-hint">
-      Odaberi koje kategorije se pojavljuju na gridu. Potrebno je minimalno 2.
-    </p>
+.mode-title {
+  color: #1a5c2e;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px;
+}
 
-    <div class="category-grid">
-      <label
-        class="category-item"
-        [class.category-locked]="cat.locked"
-        *ngFor="let cat of availableCategories"
-      >
-        <input
-          type="checkbox"
-          [checked]="selectedCategories[cat.key]"
-          [disabled]="cat.locked"
-          (change)="toggleCategory(cat.key)"
-        />
-        <span>{{ cat.label }}<span *ngIf="cat.locked" class="locked-tag"> (obavezno)</span></span>
-      </label>
-    </div>
+.mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-    <div class="mode-section">
-      <h3 class="mode-title">Broj utakmica</h3>
-      <div class="mode-options">
-        <label class="mode-item">
-          <input type="radio" name="matchMode" value="single" [(ngModel)]="matchMode" />
-          <span>Pojedinačna igra</span>
-        </label>
-        <label class="mode-item">
-          <input type="radio" name="matchMode" value="3" [(ngModel)]="matchMode" />
-          <span>Best of 3</span>
-        </label>
-        <label class="mode-item">
-          <input type="radio" name="matchMode" value="5" [(ngModel)]="matchMode" />
-          <span>Best of 5</span>
-        </label>
-      </div>
+.mode-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #1a1a1a;
+  cursor: pointer;
+}
 
-      <div *ngIf="selectedPlayMode === 'online'" class="online-options online-options-standalone">
-        <label>Vrijeme po potezu: </label>
-        <select [(ngModel)]="onlineSecondsPerMove">
-          <option [ngValue]="30">30s</option>
-          <option [ngValue]="60">60s</option>
-          <option [ngValue]="90">90s</option>
-        </select>
-      </div>
-    </div>
+.mode-item input[type='radio'] {
+  width: 17px;
+  height: 17px;
+  accent-color: #1a5c2e;
+  cursor: pointer;
+}
 
-    <button
-      class="btn-new-game"
-      [disabled]="!canStartGame"
-      (click)="onStartClick()"
-    >
-      {{ selectedPlayMode === 'online' ? 'Kreiraj poveznicu' : 'Započni igru' }}
-    </button>
+.online-toggle {
+  border-top: 1px solid #e5e5e5;
+  margin-top: 12px;
+  padding-top: 12px;
+}
 
-    <p class="category-warning" *ngIf="!canStartGame">
-      Odaberi barem 2 kategorije.
-    </p>
-  </div>
+.online-toggle .mode-item input[type='checkbox'] {
+  width: 17px;
+  height: 17px;
+  accent-color: #1a5c2e;
+  cursor: pointer;
+}
 
-  <div *ngIf="friendLink && waitingForOpponent" class="friend-link-box">
-    <p class="hint-on-dark">Pošalji ovaj link prijatelju da se pridruži:</p>
-    <div class="friend-link-row">
-      <input type="text" readonly [value]="friendLink" (click)="$any($event.target).select()" />
-      <button class="btn-new-game" (click)="copyFriendLink()">Kopiraj poruku</button>
-    </div>
-    <p *ngIf="matchInfo?.join_code" class="category-hint hint-on-dark">
-      Ili se povežite preko koda: <strong>{{ matchInfo?.join_code }}</strong>
-    </p>
-    <p class="category-hint hint-on-dark">Čeka se da se prijatelj pridruži...</p>
-  </div>
+.online-options {
+  margin-top: 8px;
+  margin-left: 25px;
+  font-size: 13px;
+  color: #444;
+}
 
-  <ng-container *ngIf="!waitingForOpponent">
-    <p *ngIf="isFriendMode && mySymbol" class="category-hint hint-on-dark">
-      Ti igraš kao {{ mySymbol }}
-    </p>
+.join-code-section {
+  border-top: 1px solid #e5e5e5;
+  margin-top: 12px;
+  padding-top: 12px;
+}
 
-    <h2 *ngIf="gameId && !winner && !isFriendMode" class="turn-indicator">
-      Turn: {{ currentTurn || 'X' }}
-    </h2>
+.friend-link-box {
+  margin: 12px 0;
+  text-align: center;
+}
 
-    <h2 *ngIf="gameId && !winner && isFriendMode" class="turn-indicator">
-      {{ isMyTurn ? 'Tvoj red' : 'Red igrača ' + currentTurn }}
-      <span *ngIf="secondsRemaining !== null"> ({{ secondsRemaining }}s)</span>
-    </h2>
+.friend-link-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 6px;
+}
 
-    <div *ngIf="matchInfo" class="match-score-row">
-      <div class="match-score">
-        Rezultat: X {{ matchInfo.x_wins }} - {{ matchInfo.o_wins }} O
-      </div>
+.friend-link-row input {
+  flex: 1;
+  max-width: 320px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 
-      <button
-        *ngIf="!matchInfo.is_finished && !drawRequestedBy"
-        class="btn-new-game btn-next-game"
-        (click)="confirmNextGame()"
-      >
-        {{ winner ? 'Sljedeća igra' : 'Zatraži remi' }}
-      </button>
-    </div>
+.join-code-display {
+  color: white;
+  font-size: 17px;
+  margin-top: 10px;
+}
 
-    <div
-      *ngIf="matchInfo && !matchInfo.is_finished && !winner && !drawRequestedBy && (!isFriendMode || isMyTurn)"
-      class="pass-turn-row"
-    >
-      <button class="btn-new-game btn-pass-turn" (click)="passTurn()">
-        Ne znam, predaj red
-      </button>
-    </div>
+.join-code-display strong {
+  font-size: 20px;
+  letter-spacing: 2px;
+}
 
-    <div *ngIf="drawRequestedBy && isWaitingForMyDrawResponse" class="draw-request-banner">
-      <p>Čekaš potvrdu protivnika za remi...</p>
-      <button class="btn-new-game btn-decline-draw" (click)="respondToDraw(false)">Odustani</button>
-    </div>
+.auto-advance-hint {
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+  font-style: italic;
+  margin: 6px 0 0;
+}
 
-    <div *ngIf="drawRequestedBy && canRespondToDraw" class="draw-request-banner">
-      <p>
-        {{ isFriendMode ? 'Protivnik traži remi.' : 'Igrač ' + drawRequestedBy + ' traži remi.' }}
-        Prihvaćaš?
-      </p>
-      <div class="draw-request-actions">
-        <button class="btn-new-game btn-accept-draw" (click)="respondToDraw(true)">Prihvati</button>
-        <button class="btn-new-game btn-decline-draw" (click)="respondToDraw(false)">Odbij</button>
-      </div>
-    </div>
+.match-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
 
-    <div *ngIf="winner">
-      <h2 *ngIf="winner !== 'draw'" class="winner-banner">
-        Winner: {{ winner }} 🎉
-      </h2>
+.btn-next-game {
+  margin-left: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+}
 
-      <h2 *ngIf="winner === 'draw'" class="winner-banner draw">
-        Draw 🤝
-      </h2>
+.draw-request-banner {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 12px auto;
+  max-width: 420px;
+  text-align: center;
+}
 
-      <h2 *ngIf="matchInfo?.is_finished" class="winner-banner">
-        Pobjednik serije: {{ matchInfo?.winner }} 🏆
-      </h2>
+.draw-request-banner p {
+  color: white;
+  margin: 0 0 10px;
+  font-weight: 600;
+}
 
-      <p *ngIf="matchInfo && !matchInfo.is_finished" class="auto-advance-hint">
-        Sljedeća igra kreće automatski...
-      </p>
-    </div>
+.draw-request-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
 
-    <div *ngIf="board.length" class="board-card">
-      <div class="col-headers">
-        <div *ngFor="let col of colRules" class="col-header">
-          {{ col.display }}
-        </div>
-      </div>
-      <div class="board-wrapper">
-        <div *ngFor="let row of board; let i = index" class="board-row">
-          <div class="row-header">
-            {{ rowRules[i].display }}
-          </div>
-          <div
-            *ngFor="let cell of row; let j = index"
-            class="cell"
-            [class.cell-selected]="selectedCell?.row === i && selectedCell?.col === j"
-            [ngStyle]="{ 'cursor': (!cell.symbol || isFinished) ? 'pointer' : 'default' }"
-            (click)="onCellClick(i, j)"
-          >
-            <div *ngIf="cell.symbol" class="jersey-wrap">
-              <svg viewBox="0 0 100 110" class="jersey-svg">
-                <defs>
-                  <linearGradient [attr.id]="'gradX-' + i + '-' + j" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#2d7a45" />
-                    <stop offset="45%" stop-color="#1a5c2e" />
-                    <stop offset="100%" stop-color="#0f3d1e" />
-                  </linearGradient>
-                  <linearGradient [attr.id]="'gradO-' + i + '-' + j" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#ff4d4d" />
-                    <stop offset="45%" stop-color="#e30613" />
-                    <stop offset="100%" stop-color="#960410" />
-                  </linearGradient>
-                </defs>
-                <path
-                  class="jersey-shape"
-                  [attr.fill]="cell.symbol === 'X' ? ('url(#gradX-' + i + '-' + j + ')') : ('url(#gradO-' + i + '-' + j + ')')"
-                  d="M35,6 C38,14 44,19 50,19 C56,19 62,14 65,6 L88,24 L76,40 L69,34 L69,100 L31,100 L31,34 L24,40 L12,24 Z"
-                />
-                <path
-                  class="jersey-highlight"
-                  d="M35,6 C38,14 44,19 50,19 L50,30 L33,30 L33,10 Z"
-                />
-                <path
-                  class="jersey-fold"
-                  d="M50,22 L50,96"
-                />
-                <path
-                  class="jersey-fold jersey-fold-side"
-                  d="M40,32 L40,96 M60,32 L60,96"
-                />
-                <text x="50" y="68" class="jersey-letter" text-anchor="middle">{{ cell.symbol }}</text>
-              </svg>
-            </div>
-            <div *ngIf="!cell.symbol && canPlayCell(cell)" class="jersey-wrap jersey-empty">
-              <svg viewBox="0 0 100 110" class="jersey-svg">
-                <path
-                  class="jersey-shape-empty"
-                  d="M35,6 C38,14 44,19 50,19 C56,19 62,14 65,6 L88,24 L76,40 L69,34 L69,100 L31,100 L31,34 L24,40 L12,24 Z"
-                />
-                <text x="50" y="68" class="jersey-plus" text-anchor="middle">+</text>
-              </svg>
-            </div>
-            <div class="cell-player" *ngIf="cell.symbol">
-              {{ cell.player }}
-            </div>
-            <div class="cell-hint" *ngIf="!cell.symbol && canPlayCell(cell)">
-              Izaberi igrača
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+.draw-request-actions .btn-new-game {
+  margin-left: 0;
+  padding: 6px 20px;
+  font-size: 13px;
+}
 
-    <div *ngIf="board.length && activeExplanations.length" class="rules-legend">
-      <p *ngFor="let text of activeExplanations" class="rules-legend-item">{{ text }}</p>
-    </div>
-  </ng-container>
+.btn-accept-draw {
+  background: #1a5c2e;
+}
 
-  <div *ngIf="showPicker" class="modal">
-    <div class="player-list-box">
-      <div class="picker-header">
-        <h3>Odaberi igrača</h3>
-        <button class="btn-close-x" (click)="showPicker = false">✕</button>
-      </div>
-      <input
-        type="text"
-        placeholder="Search player..."
-        [(ngModel)]="searchTerm"
-        (input)="onSearchChange(searchTerm)"
-      />
-      <div class="players-container">
-        <div
-          *ngFor="let player of filteredPlayers"
-          (click)="selectPlayer(player)"
-          class="player-item"
-        >
-          {{ player.search_name }}
-        </div>
-      </div>
-    </div>
-  </div>
+.btn-accept-draw:hover {
+  background: #22773b;
+}
 
-  <div *ngIf="showPossiblePlayersModal" class="modal">
-    <div class="player-list-box">
-      <h3>Possible players</h3>
-      <div class="players-container">
-        <div *ngFor="let player of possiblePlayers" class="possible-player-item">
-          {{ player.search_name }}
-        </div>
-      </div>
-      <button class="btn-close" (click)="showPossiblePlayersModal = false">
-        Close
-      </button>
-    </div>
-  </div>
+.btn-decline-draw {
+  background: #555;
+  margin-left: 0;
+}
 
-  <div *ngIf="showInvalidMoveFeedback" class="invalid-move">
-    Invalid move ❌
-  </div>
+.btn-decline-draw:hover {
+  background: #6b6b6b;
+}
 
-  <p *ngIf="playersLastUpdated" class="players-updated-note">
-    Baza igrača zadnje ažurirana: {{ playersLastUpdated }}
-  </p>
+.match-score {
+  color: white;
+  background: rgba(0,0,0,0.25);
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin: 8px 0;
+  font-weight: 600;
+  font-size: 14px;
+}
 
-</div>
+.match-score-sub {
+  font-weight: 400;
+  opacity: 0.85;
+  font-size: 12px;
+}
+
+.category-panel {
+  display: inline-block;
+  background: white;
+  padding: 20px 24px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  margin-top: 16px;
+  text-align: left;
+  max-width: 420px;
+}
+
+.mode-select-panel { max-width: 460px; text-align: center; }
+.play-mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0 22px; }
+.play-mode-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: #f7f7f7; border: 2px solid #e5e5e5; border-radius: 12px;
+  padding: 20px 12px; cursor: pointer; font-family: inherit;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+.play-mode-card:hover { border-color: #1a5c2e; background: #f0f7f2; transform: translateY(-2px); }
+.play-mode-icon { font-size: 30px; }
+.play-mode-label { font-weight: 700; color: #1a1a1a; font-size: 15px; }
+.play-mode-sub { font-size: 12px; color: #777; line-height: 1.3; }
+.mode-select-panel .join-code-section { text-align: left; }
+.btn-back { background: none; border: none; color: #1a5c2e; font-weight: 600; font-size: 13px; cursor: pointer; padding: 0 0 10px; margin-left: 0; }
+.btn-back:hover { text-decoration: underline; }
+.online-options-standalone { border-top: 1px solid #e5e5e5; margin-top: 12px; padding-top: 12px; margin-left: 0; }
+@media (max-width: 420px) { .play-mode-grid { grid-template-columns: 1fr; } }
+
+.category-panel h2 {
+  color: #1a5c2e;
+  margin: 0 0 4px;
+}
+
+.category-hint {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.hint-on-dark {
+  color: rgba(255,255,255,0.9);
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  margin-bottom: 18px;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.category-item input[type='checkbox'] {
+  width: 17px;
+  height: 17px;
+  accent-color: #1a5c2e;
+  cursor: pointer;
+}
+
+.category-item.category-locked {
+  color: #999;
+  cursor: default;
+}
+
+.category-item.category-locked input[type='checkbox'] {
+  cursor: default;
+  accent-color: #999;
+}
+
+.locked-tag {
+  font-size: 11px;
+  color: #999;
+  font-weight: 400;
+}
+
+.category-panel .btn-new-game {
+  margin-left: 0;
+  width: 100%;
+}
+
+.category-panel .btn-new-game:disabled {
+  background: #cfcfcf;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.category-warning {
+  color: #e30613;
+  font-size: 13px;
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+.game-id {
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.turn-indicator {
+  color: white;
+  background: rgba(0,0,0,0.25);
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin: 12px 0;
+}
+
+.winner-banner {
+  color: #ffd700;
+  font-size: 28px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+  margin: 12px 0;
+}
+
+.winner-banner.draw {
+  color: white;
+}
+
+.board-card {
+  display: inline-block;
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  margin-top: 10px;
+}
+
+.col-headers {
+  display: flex;
+  margin-left: 90px;
+}
+
+.col-header {
+  width: 90px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a5c2e;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  padding: 4px;
+}
+
+.board-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.board-row {
+  display: flex;
+}
+
+.row-header {
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a5c2e;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  padding: 4px;
+}
+
+.cell {
+  width: 90px;
+  height: 90px;
+  border: 2px solid #1a5c2e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f7fdf9;
+  transition: background 0.15s;
+}
+
+.cell:hover {
+  background: #e8f5ec;
+}
+
+.cell-selected {
+  background: #d6ecff !important;
+}
+
+/* Dres */
+
+.jersey-wrap {
+  width: 50px;
+  height: 55px;
+}
+
+.jersey-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.jersey-shape {
+  stroke: rgba(0,0,0,0.25);
+  stroke-width: 1;
+}
+
+.jersey-highlight {
+  fill: rgba(255,255,255,0.25);
+}
+
+.jersey-fold {
+  stroke: rgba(0,0,0,0.12);
+  stroke-width: 1;
+  fill: none;
+}
+
+.jersey-fold-side {
+  stroke: rgba(0,0,0,0.08);
+}
+
+.jersey-letter {
+  fill: white;
+  font-size: 34px;
+  font-weight: 800;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  paint-order: stroke;
+  stroke: rgba(0,0,0,0.35);
+  stroke-width: 1.5;
+}
+
+.cell-player {
+  font-size: 9px;
+  color: #444;
+  margin-top: 3px;
+  font-weight: 600;
+  text-align: center;
+  max-width: 80px;
+  line-height: 1.1;
+}
+
+/* Prazno polje na koje se trenutno moze igrati */
+
+.jersey-shape-empty {
+  fill: #e2f1e6;
+  stroke: #1a5c2e;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.jersey-plus {
+  fill: #1a5c2e;
+  font-size: 40px;
+  font-weight: 800;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.cell-hint {
+  font-size: 9px;
+  color: #1a5c2e;
+  margin-top: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.pass-turn-row {
+  margin: 0 0 12px;
+}
+
+.btn-pass-turn {
+  margin-left: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+}
+
+.players-updated-note {
+  color: rgba(255,255,255,0.65);
+  font-size: 11px;
+  margin-top: 20px;
+}
+
+.rules-legend {
+  margin-top: 14px;
+  text-align: left;
+  display: inline-block;
+  max-width: 460px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px;
+  padding: 10px 16px;
+}
+
+.rules-legend-item {
+  color: rgba(255,255,255,0.85);
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.invalid-move {
+  color: #e30613;
+  background: white;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 6px;
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.player-list-box {
+  width: 300px;
+  max-height: 400px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.player-list-box h3 {
+  margin-top: 0;
+  color: #1a5c2e;
+}
+
+.picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.picker-header h3 {
+  margin: 0;
+}
+
+.btn-close-x {
+  background: none;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-close-x:hover {
+  background: #f0f0f0;
+  color: #e30613;
+}
+
+.player-list-box input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.players-container {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.player-item {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+}
+
+.player-item:hover {
+  background-color: #f0f0f0;
+}
+
+.possible-player-item {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+}
+
+.btn-close {
+  margin-top: 12px;
+  background: #1a5c2e;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  background: #237a3d;
+}
