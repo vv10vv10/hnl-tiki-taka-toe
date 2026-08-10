@@ -1,13 +1,43 @@
 <div class="game-container">
 
-  <h1 class="game-title">Tiki Taka Toe</h1>
+  <h1 class="game-title">Tiki Taka Toe: HNL Edition</h1>
 
   <button class="btn-new-game" (click)="openCategorySelector()">
     Nova igra
   </button>
 
-  <div *ngIf="showCategorySelector" class="category-panel">
-    <h2>Kategorije</h2>
+  <!-- KORAK 1: odabir nacina igre -->
+  <div *ngIf="showCategorySelector && setupStep === 'mode'" class="category-panel mode-select-panel">
+    <h2>Nova igra</h2>
+    <p class="category-hint">Kako želite igrati?</p>
+
+    <div class="play-mode-grid">
+      <button type="button" class="play-mode-card" (click)="chooseMode('local')">
+        <span class="play-mode-icon">🖥️</span>
+        <span class="play-mode-label">Isti uređaj</span>
+        <span class="play-mode-sub">Naizmjenično, jedan telefon ili računalo</span>
+      </button>
+      <button type="button" class="play-mode-card" (click)="chooseMode('online')">
+        <span class="play-mode-icon">🌐</span>
+        <span class="play-mode-label">Protiv prijatelja</span>
+        <span class="play-mode-sub">Svako na svom uređaju, preko linka</span>
+      </button>
+    </div>
+
+    <div class="join-code-section">
+      <p class="category-hint">Ili se pridruži postojećoj igri preko koda:</p>
+      <div class="friend-link-row">
+        <input type="text" placeholder="npr. A1B2C3" [(ngModel)]="joinCodeInput" maxlength="6" />
+        <button class="btn-new-game" (click)="joinWithCode()">Pridruži se</button>
+      </div>
+      <p *ngIf="joinCodeError" class="category-warning">{{ joinCodeError }}</p>
+    </div>
+  </div>
+
+  <!-- KORAK 2: kategorije, broj utakmica, opcije za odabrani nacin -->
+  <div *ngIf="showCategorySelector && setupStep === 'options'" class="category-panel">
+    <button type="button" class="btn-back" (click)="backToModeSelect()">← Nazad</button>
+    <h2>{{ selectedPlayMode === 'online' ? 'Igra s prijateljem' : 'Igra na istom uređaju' }}</h2>
     <p class="category-hint">
       Odaberi koje kategorije se pojavljuju na gridu. Potrebno je minimalno 2.
     </p>
@@ -29,7 +59,7 @@
     </div>
 
     <div class="mode-section">
-      <h3 class="mode-title">Način igre</h3>
+      <h3 class="mode-title">Broj utakmica</h3>
       <div class="mode-options">
         <label class="mode-item">
           <input type="radio" name="matchMode" value="single" [(ngModel)]="matchMode" />
@@ -45,28 +75,13 @@
         </label>
       </div>
 
-      <div class="online-toggle">
-        <label class="mode-item">
-          <input type="checkbox" [(ngModel)]="onlineEnabled" />
-          <span>Igraj s prijateljem (online, preko linka ili koda)</span>
-        </label>
-        <div *ngIf="onlineEnabled" class="online-options">
-          <label>Vrijeme po potezu: </label>
-          <select [(ngModel)]="onlineSecondsPerMove">
-            <option [ngValue]="30">30s</option>
-            <option [ngValue]="60">60s</option>
-            <option [ngValue]="90">90s</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="join-code-section">
-        <p class="category-hint">Ili se pridruži postojećoj igri preko koda:</p>
-        <div class="friend-link-row">
-          <input type="text" placeholder="npr. A1B2C3" [(ngModel)]="joinCodeInput" maxlength="6" />
-          <button class="btn-new-game" (click)="joinWithCode()">Pridruži se</button>
-        </div>
-        <p *ngIf="joinCodeError" class="category-warning">{{ joinCodeError }}</p>
+      <div *ngIf="selectedPlayMode === 'online'" class="online-options online-options-standalone">
+        <label>Vrijeme po potezu: </label>
+        <select [(ngModel)]="onlineSecondsPerMove">
+          <option [ngValue]="30">30s</option>
+          <option [ngValue]="60">60s</option>
+          <option [ngValue]="90">90s</option>
+        </select>
       </div>
     </div>
 
@@ -75,7 +90,7 @@
       [disabled]="!canStartGame"
       (click)="onStartClick()"
     >
-      Započni igru
+      {{ selectedPlayMode === 'online' ? 'Kreiraj poveznicu' : 'Započni igru' }}
     </button>
 
     <p class="category-warning" *ngIf="!canStartGame">

@@ -40,6 +40,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   showCategorySelector = true;
 
+  // korak unutar setup ekrana: prvo se bira nacin igre, tek onda kategorije/broj utakmica
+  setupStep: 'mode' | 'options' = 'mode';
+  selectedPlayMode: 'local' | 'online' | null = null;
+
   // 'single' = obicna igra, '3'/'5' = best of serija
   matchMode: 'single' | '3' | '5' = 'single';
   matchId: string | null = null;
@@ -112,10 +116,24 @@ export class AppComponent implements OnInit, OnDestroy {
     this.selectedCategories[key] = !this.selectedCategories[key];
   }
 
+  chooseMode(mode: 'local' | 'online') {
+    this.selectedPlayMode = mode;
+    this.onlineEnabled = mode === 'online';
+    this.setupStep = 'options';
+  }
+
+  backToModeSelect() {
+    this.setupStep = 'mode';
+    this.selectedPlayMode = null;
+    this.onlineEnabled = false;
+  }
+
   openCategorySelector() {
     this.clearAutoAdvance();
     this.stopPolling();
     this.showCategorySelector = true;
+    this.setupStep = 'mode';
+    this.selectedPlayMode = null;
     this.matchId = null;
     this.matchInfo = null;
     this.matchMode = 'single';
