@@ -119,18 +119,21 @@
 .friend-link-row input {
   flex: 1;
   max-width: 320px;
+  min-width: 140px;
   padding: 6px 8px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
-.friend-link-row .btn-new-game {
-  margin-left: 0;
-  flex-shrink: 0;
+.join-code-display {
+  color: white;
+  font-size: 17px;
+  margin-top: 10px;
 }
 
-.code-input {
-  min-width: 160px;
+.join-code-display strong {
+  font-size: 20px;
+  letter-spacing: 2px;
 }
 
 .auto-advance-hint {
@@ -303,6 +306,11 @@
 .category-panel .btn-new-game {
   margin-left: 0;
   width: 100%;
+}
+
+.category-panel .friend-link-row .btn-new-game {
+  width: auto;
+  flex-shrink: 0;
 }
 
 .category-panel .btn-new-game:disabled {
