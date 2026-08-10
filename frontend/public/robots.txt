@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hnl-tiki-taka-toe-pi.vercel.app/sitemap.xml
