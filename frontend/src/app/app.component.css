@@ -124,6 +124,15 @@
   border-radius: 4px;
 }
 
+.friend-link-row .btn-new-game {
+  margin-left: 0;
+  flex-shrink: 0;
+}
+
+.code-input {
+  min-width: 160px;
+}
+
 .auto-advance-hint {
   color: rgba(255,255,255,0.75);
   font-size: 13px;

@@ -27,7 +27,7 @@
     <div class="join-code-section">
       <p class="category-hint">Ili se pridruži postojećoj igri preko koda:</p>
       <div class="friend-link-row">
-        <input type="text" placeholder="npr. A1B2C3" [(ngModel)]="joinCodeInput" maxlength="6" />
+        <input type="text" class="code-input" placeholder="npr. A1B2C3" [(ngModel)]="joinCodeInput" maxlength="6" />
         <button class="btn-new-game" (click)="joinWithCode()">Pridruži se</button>
       </div>
       <p *ngIf="joinCodeError" class="category-warning">{{ joinCodeError }}</p>
