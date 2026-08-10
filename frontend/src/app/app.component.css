@@ -127,12 +127,12 @@
 
 .join-code-display {
   color: white;
-  font-size: 17px;
+  font-size: 20px;
   margin-top: 10px;
 }
 
 .join-code-display strong {
-  font-size: 20px;
+  font-size: 24px;
   letter-spacing: 2px;
 }
 
@@ -311,6 +311,8 @@
 .category-panel .friend-link-row .btn-new-game {
   width: auto;
   flex-shrink: 0;
+  padding: 12px 18px;
+  font-size: 14px;
 }
 
 .category-panel .btn-new-game:disabled {
