@@ -98,7 +98,7 @@
     </p>
   </div>
 
-  <div *ngIf="friendLink" class="friend-link-box">
+  <div *ngIf="friendLink && waitingForOpponent" class="friend-link-box">
     <p class="hint-on-dark">Pošalji ovaj link prijatelju da se pridruži:</p>
     <div class="friend-link-row">
       <input type="text" readonly [value]="friendLink" (click)="$any($event.target).select()" />
@@ -107,7 +107,7 @@
     <p *ngIf="matchInfo?.join_code" class="category-hint hint-on-dark">
       Ili se povežite preko koda: <strong>{{ matchInfo?.join_code }}</strong>
     </p>
-    <p *ngIf="waitingForOpponent" class="category-hint hint-on-dark">Čeka se da se prijatelj pridruži...</p>
+    <p class="category-hint hint-on-dark">Čeka se da se prijatelj pridruži...</p>
   </div>
 
   <ng-container *ngIf="!waitingForOpponent">
