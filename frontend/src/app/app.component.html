@@ -20,7 +20,7 @@
       <button type="button" class="play-mode-card" (click)="chooseMode('online')">
         <span class="play-mode-icon">🌐</span>
         <span class="play-mode-label">Protiv prijatelja</span>
-        <span class="play-mode-sub">Svatko na svom uređaju, preko linka</span>
+        <span class="play-mode-sub">Svatko na svom uređaju, preko linka/koda</span>
       </button>
     </div>
 
@@ -102,7 +102,7 @@
     <p class="hint-on-dark">Pošalji ovaj link prijatelju da se pridruži:</p>
     <div class="friend-link-row">
       <input type="text" readonly [value]="friendLink" (click)="$any($event.target).select()" />
-      <button class="btn-new-game" (click)="copyFriendLink()">Kopiraj</button>
+      <button class="btn-new-game" (click)="copyFriendLink()">Kopiraj poruku</button>
     </div>
     <p *ngIf="matchInfo?.join_code" class="category-hint hint-on-dark">
       Ili se povežite preko koda: <strong>{{ matchInfo?.join_code }}</strong>

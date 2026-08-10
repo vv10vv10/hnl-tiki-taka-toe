@@ -286,7 +286,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
   copyFriendLink() {
     if (!this.friendLink) return;
-    navigator.clipboard.writeText(this.friendLink);
+    const message = `Zaigraj igru Tiki Taka Toe: HNL Edition sa mnom! Ovo je link na koji se trebaš pridružiti: ${this.friendLink}`;
+    navigator.clipboard.writeText(message);
   }
 
   joinWithCode() {
