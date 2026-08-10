@@ -99,7 +99,7 @@ CLUB_DISPLAY_OVERRIDES = {
 
 # isti princip - u bazi ostaju kratice (za pretragu), prikaz je razumljiviji
 CONFEDERATION_DISPLAY_OVERRIDES = {
-    "AFC": "Azija (AFC)",
+    "AFC": "Azija i Australija i Oceanija (AFC)",
     "CAF": "Afrika (CAF)",
     "CONMEBOL": "Južna Amerika (CONMEBOL)",
 }
